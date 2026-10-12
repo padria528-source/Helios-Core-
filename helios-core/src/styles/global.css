@@ -1,0 +1,1284 @@
+/* Latin subsets only: the interface is in English, and the full sets add ~40 unused font files to the build. */
+@import '@fontsource/cormorant-garamond/latin-400.css';
+@import '@fontsource/cormorant-garamond/latin-400-italic.css';
+@import '@fontsource/cormorant-garamond/latin-500.css';
+@import '@fontsource/cormorant-garamond/latin-600.css';
+@import '@fontsource/ibm-plex-mono/latin-400.css';
+@import '@fontsource/ibm-plex-mono/latin-500.css';
+
+:root {
+  --ink: #040404;
+  --paper: #ece3d0;
+  --paper-dim: #c0b7a4;
+  --muted: #877e6d;
+  --gold: #c9a45c;
+  --gold-bright: #e9cb8c;
+  --amber: #ffa23a;
+  --line: rgba(201, 164, 92, 0.2);
+  --line-faint: rgba(201, 164, 92, 0.1);
+  --line-strong: rgba(201, 164, 92, 0.55);
+  --serif: 'Cormorant Garamond', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --ease: cubic-bezier(0.22, 0.61, 0.24, 1);
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+h1,
+h2,
+p,
+dl,
+dd,
+dt,
+ul {
+  margin: 0;
+  padding: 0;
+  font-weight: inherit;
+}
+
+ul {
+  list-style: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+abbr {
+  text-decoration: none;
+}
+
+.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage                                                               */
+/* ------------------------------------------------------------------ */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  touch-action: none;
+  cursor: grab;
+}
+
+.stage:active {
+  cursor: grabbing;
+}
+
+.stage canvas {
+  display: block;
+  outline: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* HUD frame                                                           */
+/* ------------------------------------------------------------------ */
+
+.hud {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: minmax(250px, 330px) minmax(0, 1fr) minmax(250px, 310px);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'brand . nav'
+    'specimen . side'
+    'console console actions';
+  column-gap: 24px;
+  row-gap: 18px;
+  padding: clamp(22px, 3.6vh, 42px) clamp(24px, 3.2vw, 56px) clamp(18px, 3vh, 32px);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Only real controls take the pointer; everywhere else a drag reaches the artifact. */
+.hud button,
+.hud input,
+.hud label {
+  pointer-events: auto;
+}
+
+/* Soft shade at the two edges so type holds over the lit floor. */
+.hud::before,
+.hud::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 30%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.hud::before {
+  left: 0;
+  background: linear-gradient(90deg, rgba(4, 4, 4, 0.62), rgba(4, 4, 4, 0));
+}
+
+.hud::after {
+  right: 0;
+  background: linear-gradient(270deg, rgba(4, 4, 4, 0.62), rgba(4, 4, 4, 0));
+}
+
+/* The interface arrives after the machine, one region at a time. */
+.hud > *,
+.console,
+.actions {
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 1.3s var(--ease),
+    transform 1.3s var(--ease);
+}
+
+.hud[data-ready='true'] > *,
+.hud[data-ready='true'] .console,
+.hud[data-ready='true'] .actions {
+  opacity: 1;
+  transform: none;
+}
+
+.hud[data-ready='true'] > .nav {
+  transition-delay: 0.1s;
+}
+
+.hud[data-ready='true'] > .specimen {
+  transition-delay: 0.2s;
+}
+
+.hud[data-ready='true'] > .side {
+  transition-delay: 0.3s;
+}
+
+.hud[data-ready='true'] .console {
+  transition-delay: 0.4s;
+}
+
+.hud[data-ready='true'] .actions {
+  transition-delay: 0.5s;
+}
+
+.hud[data-ready='true'] > .viewreset {
+  transition-delay: 0.5s;
+}
+
+:focus-visible {
+  outline: 1px solid var(--gold-bright);
+  outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Shared type                                                         */
+/* ------------------------------------------------------------------ */
+
+.eyebrow {
+  font: 500 10px/1 var(--mono);
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.eyebrow--rule {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.eyebrow--rule::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.facts {
+  border-top: 1px solid var(--line);
+}
+
+.facts__row {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  align-items: baseline;
+  padding: 6px 0 7px;
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.facts dt {
+  font: 400 9.5px/1 var(--mono);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.facts dd {
+  font: 500 17px/1.15 var(--serif);
+  letter-spacing: 0.03em;
+  color: var(--paper-dim);
+}
+
+/* ------------------------------------------------------------------ */
+/* Buttons                                                             */
+/* ------------------------------------------------------------------ */
+
+.btn {
+  appearance: none;
+  position: relative;
+  padding: 9px 13px 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: rgba(8, 7, 6, 0.36);
+  font: 500 10px/1 var(--mono);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--paper-dim);
+  cursor: pointer;
+  transition:
+    color 0.3s var(--ease),
+    border-color 0.3s var(--ease),
+    background-color 0.3s var(--ease);
+}
+
+.btn:hover {
+  color: var(--paper);
+  border-color: var(--line-strong);
+}
+
+.btn:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+/* A toggle carries a small lamp; it lights when the function is engaged. */
+.btn[aria-pressed] {
+  padding-left: 26px;
+}
+
+.btn[aria-pressed]::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin-top: -2.5px;
+  background: rgba(201, 164, 92, 0.24);
+  transition: background-color 0.3s var(--ease);
+}
+
+.btn[aria-pressed='true'] {
+  color: var(--gold-bright);
+  border-color: var(--line-strong);
+  background: rgba(201, 164, 92, 0.08);
+}
+
+.btn[aria-pressed='true']::before {
+  background: var(--amber);
+}
+
+.btn--quiet {
+  padding: 4px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: var(--muted);
+}
+
+.btn--quiet:hover {
+  border-bottom-color: var(--line-strong);
+}
+
+.btn--wide {
+  width: 100%;
+  padding: 13px;
+  text-align: center;
+  color: var(--gold-bright);
+  border-color: var(--line-strong);
+}
+
+/* ------------------------------------------------------------------ */
+/* Brand                                                               */
+/* ------------------------------------------------------------------ */
+
+.brand {
+  grid-area: brand;
+}
+
+.brand__collection {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font: 500 10px/1 var(--mono);
+  letter-spacing: 0.44em;
+  text-transform: uppercase;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.brand__collection::before {
+  content: '';
+  width: 26px;
+  height: 1px;
+  background: var(--line-strong);
+}
+
+.brand__title {
+  margin: 18px 0 14px -0.04em;
+  font: 500 clamp(40px, 4.4vw, 68px) / 0.92 var(--serif);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--paper);
+  white-space: nowrap;
+}
+
+.brand__title button {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: default;
+}
+
+.brand__tagline {
+  position: relative;
+  height: 12px;
+  font: 400 10px/1.2 var(--mono);
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.brand__tagline span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  transition: opacity 0.7s var(--ease);
+}
+
+.brand__serial {
+  color: var(--gold);
+}
+
+/* ------------------------------------------------------------------ */
+/* Navigation                                                          */
+/* ------------------------------------------------------------------ */
+
+.nav {
+  grid-area: nav;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: clamp(14px, 1.6vw, 26px);
+}
+
+.nav__item {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 0 0 8px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: none;
+  font: 500 10px/1 var(--mono);
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 0.3s var(--ease),
+    border-color 0.3s var(--ease);
+}
+
+.nav__index {
+  font-weight: 400;
+  font-size: 9px;
+  color: rgba(201, 164, 92, 0.6);
+}
+
+.nav__item:hover {
+  color: var(--paper-dim);
+}
+
+.nav__item[aria-current='page'] {
+  color: var(--paper);
+  border-bottom-color: var(--gold);
+}
+
+.nav__item[aria-current='page'] .nav__index {
+  color: var(--gold-bright);
+}
+
+/* ------------------------------------------------------------------ */
+/* Specimen record                                                     */
+/* ------------------------------------------------------------------ */
+
+.specimen {
+  grid-area: specimen;
+  align-self: end;
+  width: min(100%, 270px);
+}
+
+.specimen__name {
+  margin: 12px 0 16px;
+  font: 500 25px/1 var(--serif);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--paper);
+}
+
+.specimen__verse {
+  margin-top: 18px;
+  font: italic 400 17px/1.34 var(--serif);
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* Right column: anatomy, telemetry, plate                             */
+/* ------------------------------------------------------------------ */
+
+.side {
+  grid-area: side;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 22px;
+  min-height: 0;
+  padding-top: 14px;
+}
+
+.anatomy__list {
+  margin-top: 10px;
+}
+
+.anatomy__item {
+  appearance: none;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  width: 100%;
+  padding: 9px 0 10px 12px;
+  border: 0;
+  border-left: 1px solid transparent;
+  border-bottom: 1px solid var(--line-faint);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.4s var(--ease),
+    background-color 0.4s var(--ease);
+}
+
+.anatomy__item:hover {
+  border-left-color: var(--line-strong);
+}
+
+.anatomy__index {
+  padding-top: 3px;
+  font: 400 9px/1 var(--mono);
+  letter-spacing: 0.1em;
+  color: rgba(201, 164, 92, 0.55);
+}
+
+.anatomy__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.anatomy__name {
+  font: 500 15px/1.1 var(--serif);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--paper-dim);
+  transition: color 0.4s var(--ease);
+}
+
+.anatomy__material {
+  margin-top: 5px;
+  font: 400 9.5px/1.3 var(--mono);
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+
+/* The note opens with a grid-row transition, so its height never has to be known. */
+.anatomy__note {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.55s var(--ease),
+    opacity 0.55s var(--ease),
+    margin-top 0.55s var(--ease);
+}
+
+.anatomy__note > span {
+  overflow: hidden;
+  font: italic 400 14.5px/1.36 var(--serif);
+  letter-spacing: 0.01em;
+  color: var(--paper-dim);
+}
+
+.anatomy__item[aria-pressed='true'] {
+  border-left-color: var(--gold);
+  background: linear-gradient(90deg, rgba(201, 164, 92, 0.07), rgba(201, 164, 92, 0));
+}
+
+.anatomy__item[aria-pressed='true'] .anatomy__name {
+  color: var(--gold-bright);
+}
+
+.anatomy__item[aria-pressed='true'] .anatomy__index {
+  color: var(--gold-bright);
+}
+
+.anatomy__item[aria-pressed='true'] .anatomy__note {
+  grid-template-rows: 1fr;
+  margin-top: 8px;
+  opacity: 1;
+}
+
+.readout {
+  margin-top: 8px;
+}
+
+.readout__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.readout dt {
+  font: 400 9.5px/1 var(--mono);
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.readout dd {
+  font: 500 11px/1 var(--mono);
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  color: var(--paper);
+  white-space: nowrap;
+}
+
+.readout .readout__state {
+  color: var(--amber);
+}
+
+.telemetry__note,
+.plate__note {
+  margin-top: 9px;
+  font: 400 9px/1.5 var(--mono);
+  letter-spacing: 0.14em;
+  color: rgba(135, 126, 109, 0.8);
+}
+
+.plate .facts {
+  margin-top: 10px;
+}
+
+.plate .facts dd {
+  font-size: 15.5px;
+}
+
+.plate .btn {
+  margin-top: 18px;
+}
+
+.facts--mobile {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Control console                                                     */
+/* ------------------------------------------------------------------ */
+
+/* On desktop the wrapper dissolves, so its two halves sit in their own grid cells. */
+.controls {
+  display: contents;
+}
+
+.console {
+  grid-area: console;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  column-gap: clamp(22px, 3vw, 52px);
+  row-gap: 14px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.console__group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.console__group--dials {
+  flex-direction: row;
+  gap: clamp(18px, 2.2vw, 36px);
+}
+
+.actions {
+  grid-area: actions;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.actions__view {
+  align-self: flex-end;
+}
+
+.actions__row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.actions__row .btn {
+  margin-left: -1px;
+  padding: 10px 4px;
+  letter-spacing: 0.2em;
+  text-align: center;
+}
+
+.actions__row .btn:first-child {
+  margin-left: 0;
+}
+
+.actions__row .btn[aria-pressed] {
+  padding-left: 14px;
+}
+
+.actions__row .btn[aria-pressed]::before {
+  left: 9px;
+}
+
+.actions__row .btn[aria-pressed='true'] {
+  z-index: 1;
+}
+
+.modes {
+  display: flex;
+}
+
+.mode {
+  appearance: none;
+  position: relative;
+  margin-left: -1px;
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: rgba(8, 7, 6, 0.36);
+  font: 500 10px/1 var(--mono);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 0.3s var(--ease),
+    border-color 0.3s var(--ease),
+    background-color 0.3s var(--ease);
+}
+
+.mode:first-child {
+  margin-left: 0;
+}
+
+.mode:hover {
+  color: var(--paper-dim);
+}
+
+.mode[aria-checked='true'] {
+  z-index: 1;
+  color: var(--gold-bright);
+  border-color: var(--line-strong);
+  background: rgba(201, 164, 92, 0.1);
+}
+
+.dial {
+  width: clamp(128px, 12vw, 178px);
+}
+
+.dial__label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 9px;
+  font: 500 10px/1 var(--mono);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.dial__label output {
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+  color: var(--paper);
+}
+
+/* Range input as an engraved scale: hairline track, lit up to the index. */
+.dial__input {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  background:
+    linear-gradient(var(--gold), var(--gold)) 0 50% / var(--fill, 0%) 1px no-repeat,
+    linear-gradient(var(--line), var(--line)) 0 50% / 100% 1px no-repeat,
+    repeating-linear-gradient(90deg, var(--line-strong) 0 1px, transparent 1px 12.5%) 0 100% / calc(100% + 1px) 4px no-repeat;
+  cursor: ew-resize;
+}
+
+.dial__input::-webkit-slider-runnable-track {
+  height: 22px;
+  background: none;
+}
+
+.dial__input::-moz-range-track {
+  height: 22px;
+  background: none;
+}
+
+.dial__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 3px;
+  height: 15px;
+  margin-top: 3.5px;
+  border: 0;
+  border-radius: 0;
+  background: var(--gold-bright);
+}
+
+.dial__input::-moz-range-thumb {
+  width: 3px;
+  height: 15px;
+  border: 0;
+  border-radius: 0;
+  background: var(--gold-bright);
+}
+
+/* ------------------------------------------------------------------ */
+/* Hint                                                                */
+/* ------------------------------------------------------------------ */
+
+.viewreset {
+  display: none;
+}
+
+.actions__hint {
+  align-self: flex-end;
+  font: 400 9px/1 var(--mono);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  transition: opacity 0.9s var(--ease);
+}
+
+.hint__coarse {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .hint__fine {
+    display: none;
+  }
+
+  .hint__coarse {
+    display: inline;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Navigation states re-weight the interface                           */
+/* ------------------------------------------------------------------ */
+
+@media (min-width: 761px) {
+  .hud[data-ready='true'][data-view='explore'] > .specimen,
+  .hud[data-ready='true'][data-view='explore'] .console,
+  .hud[data-ready='true'][data-view='interact'] > .specimen,
+  .hud[data-ready='true'][data-view='collect'] > .specimen,
+  .hud[data-ready='true'][data-view='collect'] .console {
+    opacity: 0.4;
+    transition-delay: 0s;
+  }
+
+  .hud[data-view='interact'] .anatomy,
+  .hud[data-view='explore'] .telemetry {
+    opacity: 0.4;
+  }
+
+  .anatomy,
+  .telemetry {
+    transition: opacity 0.8s var(--ease);
+  }
+
+  .hud[data-ready='true'] .console:focus-within,
+  .hud .anatomy:focus-within {
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Loading and fallback                                                */
+/* ------------------------------------------------------------------ */
+
+.loading,
+.fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--ink);
+  text-align: center;
+}
+
+.loading {
+  transition:
+    opacity 1.1s var(--ease),
+    visibility 1.1s;
+}
+
+.loading.is-done {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loading__title,
+.fallback__title {
+  font: 500 clamp(30px, 5vw, 50px) / 1 var(--serif);
+  letter-spacing: 0.3em;
+  margin-right: -0.3em;
+  text-transform: uppercase;
+  color: var(--paper);
+}
+
+.loading__subtitle,
+.fallback__collection {
+  margin-top: 18px;
+  font: 400 10px/1 var(--mono);
+  letter-spacing: 0.5em;
+  margin-right: -0.5em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.fallback__collection {
+  margin: 0 -0.5em 20px 0;
+}
+
+.loading__line {
+  width: min(240px, 60vw);
+  height: 1px;
+  margin-top: 34px;
+  background: var(--line);
+}
+
+.loading__line span {
+  display: block;
+  height: 100%;
+  background: var(--gold-bright);
+  transform-origin: left center;
+  transition: transform 0.7s var(--ease);
+}
+
+.loading__stage {
+  margin-top: 14px;
+  font: 400 9px/1 var(--mono);
+  letter-spacing: 0.34em;
+  margin-right: -0.34em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.fallback__body {
+  max-width: 440px;
+  margin: 26px 0 28px;
+  font: 400 18px/1.5 var(--serif);
+  color: var(--paper-dim);
+}
+
+/* ------------------------------------------------------------------ */
+/* Narrow desktop and tablet                                           */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 1180px) {
+  .hud {
+    grid-template-columns: minmax(210px, 250px) minmax(0, 1fr) minmax(210px, 250px);
+    column-gap: 16px;
+  }
+
+  .specimen__verse {
+    display: none;
+  }
+
+  .anatomy__material {
+    display: none;
+  }
+
+  .actions__row .btn {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+  }
+}
+
+@media (max-height: 800px) {
+  .specimen__verse {
+    display: none;
+  }
+
+  .telemetry__note {
+    display: none;
+  }
+}
+
+@media (max-height: 700px) and (min-width: 761px) {
+  .specimen .facts {
+    display: none;
+  }
+
+  .specimen__name {
+    margin-bottom: 0;
+  }
+
+  .anatomy__material {
+    display: none;
+  }
+
+  .telemetry .readout__row:last-child {
+    display: none;
+  }
+}
+
+@media (max-height: 560px) and (min-width: 761px) {
+  .telemetry,
+  .specimen {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Phone: the artifact keeps the screen; one sheet at a time            */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 760px) {
+  .hud {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'brand reset'
+      '. .'
+      'sheet sheet'
+      'nav nav';
+    column-gap: 12px;
+    row-gap: 10px;
+    padding: 16px 16px calc(10px + env(safe-area-inset-bottom));
+  }
+
+  /* The sheet sits on a near-solid band so its type never fights the machinery behind it. */
+  .hud::before {
+    top: auto;
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(0deg, rgba(4, 4, 4, 0.95) 0%, rgba(4, 4, 4, 0.9) 34%, rgba(4, 4, 4, 0.5) 62%, rgba(4, 4, 4, 0) 100%);
+  }
+
+  .hud[data-view='observe']::before {
+    height: 30%;
+  }
+
+  .hud::after {
+    bottom: auto;
+    width: 100%;
+    height: 22%;
+    background: linear-gradient(180deg, rgba(4, 4, 4, 0.7), rgba(4, 4, 4, 0));
+  }
+
+  .brand__collection {
+    font-size: 8.5px;
+    letter-spacing: 0.36em;
+    gap: 10px;
+  }
+
+  .brand__collection::before {
+    width: 16px;
+  }
+
+  .brand__title {
+    margin: 11px 0 9px;
+    font-size: 31px;
+    letter-spacing: 0.12em;
+  }
+
+  .brand__tagline {
+    font-size: 8px;
+    letter-spacing: 0.28em;
+  }
+
+  .viewreset {
+    display: block;
+    grid-area: reset;
+    align-self: start;
+    justify-self: end;
+  }
+
+  .viewreset .btn {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+  }
+
+  .nav {
+    justify-content: space-between;
+    gap: 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+
+  .nav__item {
+    flex: 1;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0 6px;
+    border-bottom: 0;
+    border-top: 1px solid transparent;
+    margin-top: -11px;
+    padding-top: 13px;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-align: center;
+  }
+
+  .nav__item[aria-current='page'] {
+    border-top-color: var(--gold);
+  }
+
+  .specimen {
+    display: none;
+  }
+
+  .side,
+  .controls {
+    grid-area: sheet;
+    padding-top: 0;
+  }
+
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Each navigation state shows exactly one sheet. */
+  .hud[data-view='observe'] .anatomy,
+  .hud[data-view='explore'] .telemetry,
+  .hud[data-view='interact'] .side,
+  .hud:not([data-view='interact']) .controls {
+    display: none;
+  }
+
+  .anatomy__list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 14px;
+    margin-top: 6px;
+  }
+
+  .anatomy__item {
+    padding: 8px 0 8px 9px;
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+
+  .anatomy__name {
+    font-size: 13px;
+    letter-spacing: 0.16em;
+  }
+
+  .anatomy__material,
+  .anatomy__note {
+    display: none;
+  }
+
+  .telemetry .eyebrow,
+  .telemetry__note,
+  .telemetry .readout__row:last-child {
+    display: none;
+  }
+
+  .readout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 18px;
+    margin-top: 0;
+  }
+
+  .readout dt {
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+  }
+
+  .readout dd {
+    font-size: 10px;
+  }
+
+  .console,
+  .actions {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .console {
+    column-gap: 14px;
+    row-gap: 12px;
+  }
+
+  .console .eyebrow,
+  .actions__view,
+  .actions__hint {
+    display: none;
+  }
+
+  .console__group,
+  .console__group--dials {
+    width: 100%;
+    margin: 0;
+  }
+
+  .modes {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .mode,
+  .actions__row .btn {
+    padding: 11px 2px;
+    font-size: 8.5px;
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+
+  .actions__row .btn[aria-pressed] {
+    padding-left: 12px;
+  }
+
+  .actions__row .btn[aria-pressed]::before {
+    left: 6px;
+    width: 4px;
+    height: 4px;
+    margin-top: -2px;
+  }
+
+  .dial {
+    flex: 1;
+    width: auto;
+  }
+
+  .dial__label {
+    font-size: 9px;
+    letter-spacing: 0.22em;
+  }
+
+  .dial__input {
+    height: 26px;
+  }
+
+  .dial__input::-webkit-slider-thumb {
+    width: 5px;
+    height: 19px;
+  }
+
+  .dial__input::-moz-range-thumb {
+    width: 5px;
+    height: 19px;
+  }
+
+  .plate .facts--plate {
+    display: none;
+  }
+
+  .plate .facts--mobile {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 16px;
+    margin-top: 8px;
+    border-top: 0;
+  }
+
+  .plate .facts__row {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .plate .facts dt {
+    font-size: 8.5px;
+    letter-spacing: 0.18em;
+  }
+
+  .plate .facts dd {
+    font-size: 14px;
+  }
+
+  .plate .btn {
+    margin-top: 12px;
+    padding: 11px;
+  }
+
+  .plate__note {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    animation: none !important;
+  }
+}
